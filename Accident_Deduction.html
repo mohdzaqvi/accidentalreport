@@ -1,0 +1,413 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Driver Accident Deductions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: steel app bar + tabs; form left, live A4 letter right (stacks on phones) */
+:root{
+  --bg:#eef1f2; --surface:#ffffff; --line:#d3dadc; --fg:#17262a; --muted:#5b6b70;
+  --ink:#16404a; --accent:#c8702a; --accent-fg:#ffffff; --ok:#2f7a4c; --danger:#b23a2e; --chip:#e3eaec;
+  --font-en:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --font-ar:"IBM Plex Sans Arabic","Segoe UI","Tahoma",sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1719; --surface:#172225; --line:#2a3a3e; --fg:#e4ecee; --muted:#93a5aa;
+  --ink:#7fc1cf; --accent:#e08a43; --accent-fg:#1a0f05; --ok:#5cc188; --danger:#ef7a6c; --chip:#223236; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1719; --surface:#172225; --line:#2a3a3e; --fg:#e4ecee; --muted:#93a5aa;
+  --ink:#7fc1cf; --accent:#e08a43; --accent-fg:#1a0f05; --ok:#5cc188; --danger:#ef7a6c; --chip:#223236; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-en);font-size:14px;line-height:1.45}
+.ar{font-family:var(--font-ar);direction:rtl}
+.wrap{max-width:1240px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:18px 40px}
+header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:14px}
+header.top h1{margin:0;font-size:22px;font-weight:700;color:var(--ink);text-wrap:balance}
+header.top h1 .ar{display:block;font-size:17px;font-weight:600;color:var(--muted)}
+.status{font-size:12px;color:var(--muted)}
+.status b{color:var(--fg);font-variant-numeric:tabular-nums}
+nav.tabs{display:flex;gap:4px;border-bottom:2px solid var(--line);margin-bottom:18px;overflow-x:auto}
+nav.tabs button{appearance:none;border:0;background:none;color:var(--muted);padding:10px 14px;font:inherit;font-weight:600;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;white-space:nowrap;display:flex;flex-direction:column;align-items:flex-start;line-height:1.2}
+nav.tabs button span.ar{font-size:12px;font-weight:500}
+nav.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+nav.tabs button:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.banner{padding:10px 12px;border-radius:6px;background:var(--surface);border:1px solid var(--danger);color:var(--fg);margin-bottom:14px;font-size:13px}
+.grid{display:grid;grid-template-columns:minmax(0,380px) minmax(0,1fr);gap:22px;align-items:start}
+@media (max-width:860px){.grid{grid-template-columns:minmax(0,1fr)}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px}
+.panel h2{margin:0 0 12px;font-size:15px;color:var(--ink)}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.fields .full{grid-column:1/-1}
+label.f{display:flex;flex-direction:column;gap:4px;min-width:0}
+label.f .lbl{font-size:12px;font-weight:600;color:var(--muted);display:flex;justify-content:space-between;gap:6px}
+label.f .lbl .ar{font-weight:500}
+input,select{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:8px 10px;width:100%;min-width:0}
+input[type=file]{padding:6px;font-size:12px}
+.hint{font-size:12px;color:var(--muted);margin:2px 0 0}
+.known{font-size:12px;color:var(--ok);min-height:1em}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.btn{appearance:none;font:inherit;font-weight:600;border-radius:6px;padding:9px 14px;cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--fg)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.btn.ink{background:var(--ink);border-color:var(--ink);color:var(--surface)}
+.btn.sm{padding:5px 9px;font-size:12px}
+.btn.danger{color:var(--danger);border-color:var(--danger)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.toast{min-height:1.4em;font-size:13px;margin-top:8px}
+.toast.ok{color:var(--ok)} .toast.err{color:var(--danger)}
+.previewbox{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px;min-width:0}
+.previewbox .cap{font-size:12px;color:var(--muted);margin-bottom:8px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.scaler{position:relative;width:100%;overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,.18)}
+.scaler>.paper{position:absolute;top:0;left:0;transform-origin:top left}
+/* Letter — always printed light, independent of theme */
+.paper{width:794px;min-height:1123px;background:#fff;color:#111;padding:56px 64px;font-family:var(--font-en);font-size:15px;line-height:1.55}
+.paper .lh{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #16404a;padding-bottom:10px;margin-bottom:18px;gap:20px}
+.paper .lh .t{font-weight:700;font-size:18px;color:#16404a}
+.paper .lh .t .ar{font-size:18px}
+.paper .lh .meta{text-align:right;font-size:13px;color:#333}
+.paper .mono{font-family:var(--font-mono)}
+.paper .sect p{margin:0 0 6px}
+.paper u{text-underline-offset:3px}
+.paper .divider{border:0;border-top:1px dashed #9aa5a8;margin:16px 0}
+.paper .ar p{margin:0 0 6px}
+.paper .photos{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+.paper .photos figure{margin:0}
+.paper .photos img{width:100%;height:220px;object-fit:cover;border:1px solid #ccc;display:block}
+.paper .photos figcaption{font-size:12px;text-align:center;margin-top:4px;color:#333}
+.paper .deduct{border:1.5px solid #111;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;gap:16px;margin-top:16px}
+.paper .deduct .amt{font-size:20px;font-weight:700;font-family:var(--font-mono)}
+.paper .sigs{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:46px;font-size:13px}
+.paper .sigs div{border-top:1px solid #111;padding-top:6px}
+.paper table{width:100%;border-collapse:collapse;font-size:13px}
+.paper th,.paper td{border:1px solid #9aa5a8;padding:6px 8px;text-align:left}
+.paper th{background:#e8eef0}
+.paper td.n,.paper th.n{text-align:right;font-variant-numeric:tabular-nums}
+.tablewrap{overflow-x:auto}
+table.data{width:100%;border-collapse:collapse;font-size:13px}
+table.data th,table.data td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+table.data th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+table.data td.n,table.data th.n{text-align:right;font-variant-numeric:tabular-nums}
+table.data tr.click{cursor:pointer}
+table.data tr.click:hover td{background:var(--bg)}
+table.data tr.sel td{background:var(--chip)}
+.pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600;background:var(--chip);color:var(--fg)}
+.pill.warn{background:var(--accent);color:var(--accent-fg)}
+.empty{padding:26px 10px;text-align:center;color:var(--muted)}
+.kpis{display:flex;flex-wrap:wrap;gap:22px;margin-bottom:14px}
+.kpis div{display:flex;flex-direction:column}
+.kpis b{font-size:20px;font-variant-numeric:tabular-nums;color:var(--ink)}
+.kpis span{font-size:12px;color:var(--muted)}
+.filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:14px}
+#printArea{position:fixed;left:-12000px;top:0}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head><body>
+
+<div class="wrap">
+  <header class="top">
+    <h1>Driver Accident Deductions <span class="ar">خصومات حوادث السائقين</span></h1>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px"><div class="status" id="status">Loading…</div><div class="btns" style="margin:0"><button class="btn sm" id="bkBtn" type="button">Backup data</button><label class="btn sm" style="cursor:pointer">Restore backup<input type="file" id="rsIn" accept=".json" hidden></label></div></div>
+  </header>
+  <div class="banner" id="dbBanner" hidden>Records can't be saved in this browser (storage is blocked). You can still fill the form and download the PDF.</div>
+
+  <nav class="tabs" role="tablist">
+    <button role="tab" aria-selected="true" data-tab="new" id="t-new">New report <span class="ar">تقرير جديد</span></button>
+    <button role="tab" aria-selected="false" data-tab="drivers" id="t-drivers">Drivers <span class="ar">السائقون</span></button>
+    <button role="tab" aria-selected="false" data-tab="reports" id="t-reports">Reports <span class="ar">التقارير</span></button>
+  </nav>
+
+  <!-- NEW REPORT -->
+  <section id="v-new">
+    <div class="grid">
+      <form class="panel" id="frm" autocomplete="off">
+        <h2>Accident details</h2>
+        <div class="fields">
+          <label class="f"><span class="lbl">Emp. No <span class="ar">الرقم الوظيفي</span></span><input id="empNo" required inputmode="numeric" placeholder="3747"></label>
+          <label class="f"><span class="lbl">Report date <span class="ar">تاريخ التقرير</span></span><input id="reportDate" type="date" required></label>
+          <label class="f full"><span class="lbl">Driver name <span class="ar">اسم السائق</span></span><input id="driverName" required list="driverList" placeholder="KANNAN GOVINDA"><span class="known" id="known"></span></label>
+          <datalist id="driverList"></datalist>
+          <label class="f"><span class="lbl">Accident date <span class="ar">تاريخ الحادث</span></span><input id="accidentDate" type="date" required></label>
+          <label class="f"><span class="lbl">Deduct (SR) <span class="ar">الخصم</span></span><input id="amount" type="number" min="0" step="1" required placeholder="1000"></label>
+          <label class="f full"><span class="lbl">Vehicle <span class="ar">المركبة</span></span><input id="vehicle" value="TOYOTA PICKUP"></label>
+          <label class="f"><span class="lbl">Plate # <span class="ar">رقم اللوحة</span></span><input id="plate" value="4236 TRB"></label>
+          <label class="f"><span class="lbl">Model <span class="ar">الموديل</span></span><input id="model" value="2020"></label>
+          <label class="f"><span class="lbl">Mistake % <span class="ar">نسبة الخطأ</span></span><input id="pct" type="number" min="0" max="100" value="100"></label>
+          <label class="f"><span class="lbl">Front photo <span class="ar">صورة أمامية</span></span><input id="photoFront" type="file" accept="image/*"></label>
+          <label class="f"><span class="lbl">Back photo <span class="ar">صورة خلفية</span></span><input id="photoBack" type="file" accept="image/*"></label>
+        </div>
+        <p class="hint">Photos go into this PDF only; they are not saved in the record.</p>
+        <div class="btns">
+          <button class="btn primary" type="submit" id="saveBtn">Save &amp; download PDF</button>
+          <button class="btn" type="button" id="pdfOnly">PDF only</button>
+          <button class="btn" type="button" id="clearBtn">Clear</button>
+        </div>
+        <div class="toast" id="toast" role="status"></div>
+      </form>
+      <div class="previewbox">
+        <div class="cap"><span>Live preview · A4</span><span id="prevTotal"></span></div>
+        <div class="scaler" id="scaler"><div class="paper" id="preview"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DRIVERS -->
+  <section id="v-drivers" hidden>
+    <div class="grid" style="grid-template-columns:minmax(0,1fr) minmax(0,1fr)">
+      <div class="panel" style="min-width:0">
+        <h2>All drivers <span class="ar" style="font-weight:500;color:var(--muted)">· جميع السائقين</span></h2>
+        <input id="dSearch" placeholder="Search name or Emp. No" style="margin-bottom:10px">
+        <div class="tablewrap"><table class="data"><thead><tr><th>Emp. No</th><th>Driver</th><th class="n">Accidents</th><th class="n">Total SR</th><th>Last</th></tr></thead><tbody id="dBody"></tbody></table></div>
+      </div>
+      <div class="panel" style="min-width:0" id="dDetail">
+        <div class="empty">Select a driver to see every accident and deduction on their account.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- REPORTS -->
+  <section id="v-reports" hidden>
+    <div class="panel">
+      <h2>Deduction report <span class="ar" style="font-weight:500;color:var(--muted)">· تقرير الخصومات</span></h2>
+      <div class="filters">
+        <label class="f"><span class="lbl">From <span class="ar">من</span></span><input id="rFrom" type="date"></label>
+        <label class="f"><span class="lbl">To <span class="ar">إلى</span></span><input id="rTo" type="date"></label>
+        <label class="f"><span class="lbl">Driver <span class="ar">السائق</span></span><select id="rDriver"><option value="">All drivers</option></select></label>
+      </div>
+      <div class="kpis" id="rKpis"></div>
+      <div class="btns" style="margin:0 0 12px"><button class="btn ink" id="rPdf">Download PDF</button><button class="btn" id="rCsv">Download Excel (CSV)</button></div>
+      <div class="toast" id="rToast"></div>
+      <div class="tablewrap"><table class="data"><thead><tr><th>Accident date</th><th>Emp. No</th><th>Driver</th><th>Vehicle</th><th>Plate</th><th class="n">Mistake</th><th class="n">Deduct SR</th><th></th></tr></thead><tbody id="rBody"></tbody></table></div>
+    </div>
+  </section>
+</div>
+
+<div id="printArea"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const fmtD=iso=>{if(!iso)return"—";const[y,m,d]=iso.split("-");return`${d}/${m}/${y}`};
+const sr=n=>Number(n||0).toLocaleString("en-US");
+const today=()=>{const d=new Date();return new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,10)};
+let db=null, downloads=null, records=[], photos=[null,null], selectedEmp=null;
+
+/* ---------- Tabs ---------- */
+document.querySelectorAll("nav.tabs button").forEach(b=>b.addEventListener("click",()=>showTab(b.dataset.tab)));
+function showTab(t){
+  document.querySelectorAll("nav.tabs button").forEach(b=>b.setAttribute("aria-selected",b.dataset.tab===t));
+  ["new","drivers","reports"].forEach(v=>$("v-"+v).hidden=v!==t);
+  if(t==="new")fitPreview();
+}
+if(["new","drivers","reports"].includes(location.hash.slice(1)))showTab(location.hash.slice(1));
+
+/* ---------- Letter template ---------- */
+function formData(){
+  return{empNo:$("empNo").value.trim(),driverName:$("driverName").value.trim().toUpperCase(),
+    reportDate:$("reportDate").value,accidentDate:$("accidentDate").value,amount:Number($("amount").value||0),
+    vehicle:$("vehicle").value.trim().toUpperCase(),plate:$("plate").value.trim().toUpperCase(),
+    model:$("model").value.trim(),mistakePct:Number($("pct").value||0)};
+}
+function priorFor(emp,excludeId){return records.filter(r=>r.empNo===emp&&r.id!==excludeId)}
+function letterHTML(r,imgs=[],prior=[]){
+  const name=esc(r.driverName||"DRIVER NAME"), emp=esc(r.empNo||"—"), veh=esc(r.vehicle), pl=esc(r.plate), mo=esc(r.model), p=esc(r.mistakePct);
+  const priorTotal=prior.reduce((s,x)=>s+Number(x.amount||0),0);
+  return `
+  <div class="lh"><div class="t">Accident Report<br><span class="ar">تقرير حادث</span></div>
+    <div class="meta">Date / التاريخ: <b class="mono">${fmtD(r.reportDate)}</b><br>Ref: <span class="mono">ACC-${(r.accidentDate||"").replace(/-/g,"")}-${emp}</span></div></div>
+  <div class="sect">
+    <p><b>From:</b> Workshop (Accident and Insurance Dept.)</p>
+    <p><b>Sub:</b> Accident report</p>
+    <p style="margin-top:10px">I would like to inform you that <u><b>${name}</b></u> (Emp. No – <b>${emp}</b>) was driving a vehicle – <b>${veh}</b> plate # <b>${pl}</b> MODEL <b>${mo}</b>. This accident happened due to the driver's mistake and carelessness, so kindly take the necessary action for this activity <b>(Mistake ${p}%)</b>.</p>
+    <p><b>ACCIDENT DATE: ${fmtD(r.accidentDate)}</b></p>
+    <p>So please do the needful action.</p><p>Thank you</p>
+  </div>
+  <hr class="divider">
+  <div class="ar">
+    <p><b>من:</b> الورشة (قسم الحوادث والتأمين)</p>
+    <p><b>الموضوع:</b> تقرير حادث</p>
+    <p style="margin-top:10px">نود إفادتكم بأن السائق <u><b>${name}</b></u> (الرقم الوظيفي – <b>${emp}</b>) كان يقود المركبة – <b>${veh}</b> رقم اللوحة <b>${pl}</b> موديل <b>${mo}</b>، وقد وقع هذا الحادث بسبب خطأ السائق وإهماله، لذا نرجو اتخاذ الإجراء اللازم بهذا الشأن <b>(نسبة الخطأ ${p}%)</b>.</p>
+    <p><b>تاريخ الحادث: ${fmtD(r.accidentDate)}</b></p>
+    <p>لذا نرجو اتخاذ الإجراء اللازم.</p><p>وشكراً لكم</p>
+  </div>
+  ${(imgs[0]||imgs[1])?`<div class="photos">${[[imgs[0],"Front","الأمام"],[imgs[1],"Back","الخلف"]].filter(x=>x[0]).map(([s,en,ar])=>`<figure><img src="${s}" alt="${en}"><figcaption>${en} / <span class="ar" style="display:inline">${ar}</span></figcaption></figure>`).join("")}</div>`:""}
+  <div class="deduct"><div>DEDUCT SR <span class="amt">( ${sr(r.amount)} )</span> FROM YOUR SALARY</div>
+    <div class="ar">يُخصم مبلغ <span class="amt">( ${sr(r.amount)} )</span> ريال من راتبك</div></div>
+  ${prior.length?`<p style="font-size:12px;margin-top:8px;color:#444">Previous deductions on this account: ${prior.length} · SR ${sr(priorTotal)} &nbsp;|&nbsp; <span class="ar" style="display:inline">خصومات سابقة: ${prior.length} · ${sr(priorTotal)} ريال</span></p>`:""}
+  <div class="sigs"><div>Workshop Manager<br><span class="ar">مدير الورشة</span></div>
+    <div>Driver Signature – ${emp}<br><span class="ar">توقيع السائق</span></div></div>`;
+}
+function renderPreview(){
+  const r=formData();
+  $("preview").innerHTML=letterHTML(r,photos,priorFor(r.empNo));
+  const prior=priorFor(r.empNo);
+  $("prevTotal").textContent=prior.length?`This driver: ${prior.length} earlier · SR ${sr(prior.reduce((s,x)=>s+x.amount,0))}`:"";
+  fitPreview();
+}
+function fitPreview(){
+  const sc=$("scaler"), p=$("preview"); const w=sc.clientWidth; if(!w)return;
+  const k=w/794; p.style.transform=`scale(${k})`; sc.style.height=(p.offsetHeight*k)+"px";
+}
+new ResizeObserver(fitPreview).observe($("scaler"));
+
+/* ---------- Form ---------- */
+["empNo","driverName","reportDate","accidentDate","amount","vehicle","plate","model","pct"].forEach(id=>$(id).addEventListener("input",()=>{if(id==="empNo")autoName();renderPreview()}));
+function autoName(){
+  const emp=$("empNo").value.trim(); const hit=records.find(r=>r.empNo===emp);
+  if(hit){ if(!$("driverName").value) $("driverName").value=hit.driverName; const n=priorFor(emp).length;
+    $("known").textContent=`Known driver · ${n} earlier accident${n>1?"s":""} on file`; }
+  else $("known").textContent="";
+}
+$("driverName").addEventListener("change",()=>{const hit=records.find(r=>r.driverName===$("driverName").value.trim().toUpperCase());if(hit&&!$("empNo").value){$("empNo").value=hit.empNo;autoName();renderPreview()}});
+[["photoFront",0],["photoBack",1]].forEach(([id,i])=>$(id).addEventListener("change",e=>{
+  const f=e.target.files[0]; if(!f){photos[i]=null;renderPreview();return}
+  const fr=new FileReader(); fr.onload=()=>{photos[i]=fr.result;renderPreview()}; fr.readAsDataURL(f);
+}));
+function resetForm(){
+  ["empNo","driverName","amount"].forEach(id=>$(id).value="");
+  $("reportDate").value=today();$("accidentDate").value=today();$("photoFront").value="";$("photoBack").value="";photos=[null,null];$("known").textContent="";renderPreview();
+}
+$("clearBtn").onclick=resetForm;
+function toast(el,msg,cls){el.textContent=msg;el.className="toast "+(cls||"")}
+
+/* ---------- PDF ---------- */
+async function makePdf(html,filename){
+  const area=$("printArea"); area.innerHTML=`<div class="paper">${html}</div>`;
+  if(document.fonts&&document.fonts.ready)await document.fonts.ready;
+  await Promise.all([...area.querySelectorAll("img")].map(i=>i.complete?1:new Promise(r=>{i.onload=i.onerror=r})));
+  const canvas=await html2canvas(area.firstElementChild,{scale:2,backgroundColor:"#ffffff",useCORS:true});
+  area.innerHTML="";
+  const pdf=new window.jspdf.jsPDF({unit:"pt",format:"a4"});
+  const pw=595.28, ph=841.89, ih=canvas.height*pw/canvas.width;
+  const img=canvas.toDataURL("image/jpeg",0.92);
+  let y=0; pdf.addImage(img,"JPEG",0,y,pw,ih);
+  while(ih+y>ph+1){y-=ph;pdf.addPage();pdf.addImage(img,"JPEG",0,y,pw,ih)}
+  return save(filename,pdf.output("blob"));
+}
+async function save(filename,data){
+  const blob=data instanceof Blob?data:new Blob([data],{type:"text/csv;charset=utf-8"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=filename;document.body.appendChild(a);a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1500);return true;
+}
+const fileName=r=>`Accident_${r.empNo}_${(r.driverName||"").replace(/\s+/g,"_")}_${r.accidentDate}.pdf`;
+
+function validate(r){
+  if(!r.empNo)return"Enter the Emp. No.";if(!r.driverName)return"Enter the driver name.";
+  if(!r.accidentDate)return"Pick the accident date.";if(!(r.amount>0))return"Enter the deduction amount in SR.";return"";
+}
+$("frm").addEventListener("submit",async e=>{
+  e.preventDefault(); const r=formData(); const err=validate(r); if(err)return toast($("toast"),err,"err");
+  const btn=$("saveBtn"); btn.disabled=true;
+  try{
+    if(db){ await db.collection("accidents").add({...r,createdAt:new Date().toISOString()}); toast($("toast"),`Saved to ${r.driverName}'s account. Preparing PDF…`,"ok"); }
+    else toast($("toast"),"Not saved (no record store in this view). Preparing PDF…","err");
+    const prior=priorFor(r.empNo).filter(x=>!(x.accidentDate===r.accidentDate&&x.amount===r.amount&&x.createdAt&&Date.now()-Date.parse(x.createdAt)<10000));
+    const ok=await makePdf(letterHTML(r,photos,prior),fileName(r));
+    toast($("toast"),ok?`Saved and PDF downloaded for ${r.driverName}.`:"Saved. PDF download was cancelled.","ok");
+    resetForm();
+  }catch(x){toast($("toast"),"Couldn't finish: "+(x.message||x.code||x),"err")}
+  btn.disabled=false;
+});
+$("pdfOnly").onclick=async()=>{const r=formData();const err=validate(r);if(err)return toast($("toast"),err,"err");
+  try{const ok=await makePdf(letterHTML(r,photos,priorFor(r.empNo)),fileName(r));toast($("toast"),ok?"PDF downloaded (not saved to records).":"Download cancelled.",ok?"ok":"")}catch(x){toast($("toast"),"Couldn't make PDF: "+(x.message||x.code||x),"err")}};
+
+/* ---------- Drivers ---------- */
+function driverGroups(){
+  const m=new Map();
+  records.forEach(r=>{const g=m.get(r.empNo)||{empNo:r.empNo,driverName:r.driverName,items:[],total:0,last:""};
+    g.items.push(r);g.total+=Number(r.amount||0);if(r.accidentDate>g.last){g.last=r.accidentDate;g.driverName=r.driverName}m.set(r.empNo,g)});
+  return[...m.values()].sort((a,b)=>b.total-a.total);
+}
+function renderDrivers(){
+  const q=$("dSearch").value.trim().toLowerCase();
+  const gs=driverGroups().filter(g=>!q||g.empNo.toLowerCase().includes(q)||g.driverName.toLowerCase().includes(q));
+  $("dBody").innerHTML=gs.length?gs.map(g=>`<tr class="click ${g.empNo===selectedEmp?"sel":""}" data-emp="${esc(g.empNo)}"><td class="n" style="text-align:left">${esc(g.empNo)}</td><td>${esc(g.driverName)}</td><td class="n">${g.items.length>1?`<span class="pill warn">${g.items.length}</span>`:g.items.length}</td><td class="n"><b>${sr(g.total)}</b></td><td>${fmtD(g.last)}</td></tr>`).join("")
+    :`<tr><td colspan="5" class="empty">${records.length?"No driver matches that search.":"No accidents recorded yet. Save a report in New report and the driver appears here."}</td></tr>`;
+  $("dBody").querySelectorAll("tr.click").forEach(tr=>tr.onclick=()=>{selectedEmp=tr.dataset.emp;renderDrivers();renderDetail()});
+  $("driverList").innerHTML=driverGroups().map(g=>`<option value="${esc(g.driverName)}">${esc(g.empNo)}</option>`).join("");
+  const cur=$("rDriver").value;
+  $("rDriver").innerHTML=`<option value="">All drivers</option>`+driverGroups().map(g=>`<option value="${esc(g.empNo)}">${esc(g.empNo)} · ${esc(g.driverName)}</option>`).join("");
+  $("rDriver").value=cur;
+}
+$("dSearch").addEventListener("input",renderDrivers);
+function renderDetail(){
+  const g=driverGroups().find(x=>x.empNo===selectedEmp);
+  if(!g){$("dDetail").innerHTML=`<div class="empty">Select a driver to see every accident and deduction on their account.</div>`;return}
+  const items=[...g.items].sort((a,b)=>b.accidentDate.localeCompare(a.accidentDate));
+  $("dDetail").innerHTML=`<h2>${esc(g.driverName)} · ${esc(g.empNo)}</h2>
+    <div class="kpis"><div><b>${g.items.length}</b><span>Accidents · الحوادث</span></div><div><b>SR ${sr(g.total)}</b><span>Total deducted · إجمالي الخصم</span></div></div>
+    <div class="btns" style="margin:0 0 12px"><button class="btn ink" id="stmtBtn">Download driver statement PDF</button></div><div class="toast" id="dToast"></div>
+    <div class="tablewrap"><table class="data"><thead><tr><th>Accident date</th><th>Vehicle</th><th class="n">Mistake</th><th class="n">SR</th><th></th></tr></thead><tbody>
+    ${items.map(r=>rowActions(r,`<td>${fmtD(r.accidentDate)}</td><td>${esc(r.vehicle)} · ${esc(r.plate)}</td><td class="n">${r.mistakePct}%</td><td class="n">${sr(r.amount)}</td>`)).join("")}</tbody></table></div>`;
+  $("stmtBtn").onclick=async()=>{try{const ok=await makePdf(statementHTML(items,`Driver statement – ${g.driverName} (${g.empNo})`,`كشف حساب السائق – ${g.driverName} (${g.empNo})`),`Statement_${g.empNo}_${today()}.pdf`);toast($("dToast"),ok?"Statement downloaded.":"Download cancelled.",ok?"ok":"")}catch(x){toast($("dToast"),"Couldn't make PDF: "+(x.message||x.code||x),"err")}};
+  wireRowActions($("dDetail"),$("dToast"));
+}
+function rowActions(r,cells){return `<tr>${cells}<td style="text-align:right"><button class="btn sm" data-pdf="${r.id}">PDF</button> <button class="btn sm danger" data-del="${r.id}">Delete</button></td></tr>`}
+function wireRowActions(root,toastEl){
+  root.querySelectorAll("[data-pdf]").forEach(b=>b.onclick=async()=>{const r=records.find(x=>x.id===b.dataset.pdf);
+    const prior=records.filter(x=>x.empNo===r.empNo&&x.id!==r.id&&x.accidentDate<=r.accidentDate);
+    try{const ok=await makePdf(letterHTML(r,[],prior),fileName(r));toast(toastEl,ok?"PDF downloaded.":"Download cancelled.",ok?"ok":"")}catch(x){toast(toastEl,"Couldn't make PDF: "+(x.message||x.code||x),"err")}});
+  root.querySelectorAll("[data-del]").forEach(b=>b.onclick=async()=>{
+    if(b.dataset.armed!=="1"){b.dataset.armed="1";b.textContent="Confirm delete";setTimeout(()=>{if(b.isConnected){b.dataset.armed="";b.textContent="Delete"}},4000);return}
+    try{await db.doc("accidents/"+b.dataset.del).delete();toast(toastEl,"Record deleted.","ok")}catch(x){toast(toastEl,"Couldn't delete: "+(x.message||x.code),"err")}});
+}
+
+/* ---------- Reports ---------- */
+function filtered(){
+  const f=$("rFrom").value,t=$("rTo").value,d=$("rDriver").value;
+  return records.filter(r=>(!f||r.accidentDate>=f)&&(!t||r.accidentDate<=t)&&(!d||r.empNo===d)).sort((a,b)=>b.accidentDate.localeCompare(a.accidentDate));
+}
+function renderReports(){
+  const rs=filtered(), tot=rs.reduce((s,r)=>s+Number(r.amount||0),0), drivers=new Set(rs.map(r=>r.empNo)).size;
+  $("rKpis").innerHTML=`<div><b>${rs.length}</b><span>Accidents · الحوادث</span></div><div><b>${drivers}</b><span>Drivers · السائقون</span></div><div><b>SR ${sr(tot)}</b><span>Total deducted · إجمالي الخصم</span></div>`;
+  $("rBody").innerHTML=rs.length?rs.map(r=>rowActions(r,`<td>${fmtD(r.accidentDate)}</td><td>${esc(r.empNo)}</td><td>${esc(r.driverName)}</td><td>${esc(r.vehicle)}</td><td>${esc(r.plate)}</td><td class="n">${r.mistakePct}%</td><td class="n">${sr(r.amount)}</td>`)).join("")
+    :`<tr><td colspan="8" class="empty">${records.length?"No accidents in this date range.":"No accidents recorded yet."}</td></tr>`;
+  wireRowActions($("v-reports"),$("rToast"));
+}
+["rFrom","rTo","rDriver"].forEach(id=>$(id).addEventListener("input",renderReports));
+function statementHTML(rs,titleEn,titleAr){
+  const tot=rs.reduce((s,r)=>s+Number(r.amount||0),0);
+  const range=($("rFrom").value||$("rTo").value)?`${fmtD($("rFrom").value)} – ${fmtD($("rTo").value)}`:"All dates";
+  return `<div class="lh"><div class="t">${esc(titleEn)}<br><span class="ar">${esc(titleAr)}</span></div><div class="meta">Printed / تاريخ الطباعة: <b class="mono">${fmtD(today())}</b><br>Period: ${range}</div></div>
+  <p>Workshop (Accident and Insurance Dept.) &nbsp;·&nbsp; <span class="ar" style="display:inline">الورشة (قسم الحوادث والتأمين)</span></p>
+  <table><thead><tr><th>#</th><th>Accident date<br><span class="ar">تاريخ الحادث</span></th><th>Emp. No<br><span class="ar">الرقم</span></th><th>Driver<br><span class="ar">السائق</span></th><th>Vehicle / Plate<br><span class="ar">المركبة</span></th><th class="n">Mistake<br><span class="ar">الخطأ</span></th><th class="n">Deduct SR<br><span class="ar">الخصم</span></th></tr></thead>
+  <tbody>${rs.map((r,i)=>`<tr><td>${i+1}</td><td>${fmtD(r.accidentDate)}</td><td>${esc(r.empNo)}</td><td>${esc(r.driverName)}</td><td>${esc(r.vehicle)} · ${esc(r.plate)}</td><td class="n">${r.mistakePct}%</td><td class="n">${sr(r.amount)}</td></tr>`).join("")}
+  <tr><td colspan="6" style="text-align:right"><b>Total / الإجمالي</b></td><td class="n"><b>${sr(tot)}</b></td></tr></tbody></table>
+  <div class="sigs"><div>Prepared by<br><span class="ar">أعدّه</span></div><div>Approved by<br><span class="ar">اعتمده</span></div></div>`;
+}
+$("rPdf").onclick=async()=>{const rs=filtered();if(!rs.length)return toast($("rToast"),"Nothing to print for this filter.","err");
+  try{const ok=await makePdf(statementHTML(rs,"Accident deduction report","تقرير خصومات الحوادث"),`Deduction_Report_${today()}.pdf`);toast($("rToast"),ok?"Report downloaded.":"Download cancelled.",ok?"ok":"")}catch(x){toast($("rToast"),"Couldn't make PDF: "+(x.message||x.code||x),"err")}};
+$("rCsv").onclick=async()=>{const rs=filtered();if(!rs.length)return toast($("rToast"),"Nothing to export for this filter.","err");
+  const q=v=>`"${String(v??"").replace(/"/g,'""')}"`;
+  const lines=[["Accident Date","Report Date","Emp No","Driver Name","Vehicle","Plate","Model","Mistake %","Deduct SR"].join(",")]
+    .concat(rs.map(r=>[fmtD(r.accidentDate),fmtD(r.reportDate),r.empNo,r.driverName,r.vehicle,r.plate,r.model,r.mistakePct,r.amount].map(q).join(",")));
+  try{const ok=await save(`Deduction_Report_${today()}.csv`,"﻿"+lines.join("\r\n"));toast($("rToast"),ok?"CSV downloaded. It opens in Excel.":"Download cancelled.",ok?"ok":"")}catch(x){toast($("rToast"),"Couldn't export: "+(x.message||x.code||x),"err")}};
+
+/* ---------- Boot ---------- */
+function renderAll(){renderDrivers();renderDetail();renderReports();autoName();renderPreview();
+  const tot=records.reduce((s,r)=>s+Number(r.amount||0),0);
+  $("status").innerHTML=db?`<b>${records.length}</b> accidents · <b>SR ${sr(tot)}</b> deducted`:"Records not connected";}
+$("reportDate").value=today();$("accidentDate").value=today();
+renderAll();
+const KEY="accidentDeductions.v1";
+function persist(){localStorage.setItem(KEY,JSON.stringify(records))}
+function loadLocal(){
+  try{
+    const raw=localStorage.getItem(KEY);
+    records=raw?JSON.parse(raw):[{id:"acc-3747-20260910",empNo:"3747",driverName:"KANNAN GOVINDA",reportDate:"2026-09-10",accidentDate:"2026-09-10",amount:1000,vehicle:"TOYOTA PICKUP",plate:"4236 TRB",model:"2020",mistakePct:100,createdAt:"2026-09-10T08:00:00.000Z"}];
+    if(!raw)persist();
+    db={collection:()=>({add:async d=>{records.push({id:"acc-"+Date.now().toString(36)+Math.random().toString(36).slice(2,6),...d});persist();renderAll()}}),
+        doc:p=>({delete:async()=>{const id=p.split("/")[1];records=records.filter(r=>r.id!==id);persist();renderAll()}})};
+  }catch(e){db=null;$("dbBanner").hidden=false}
+  downloads=true;renderAll();
+}
+loadLocal();
+$("bkBtn").onclick=()=>save(`accident-backup-${today()}.json`,new Blob([JSON.stringify(records,null,1)],{type:"application/json"}));
+$("rsIn").onchange=async e=>{const f=e.target.files[0];if(!f)return;
+  try{const arr=JSON.parse(await f.text());if(!Array.isArray(arr))throw 0;
+    const m=new Map(records.map(r=>[r.id,r]));arr.forEach(r=>r&&r.id&&m.set(r.id,r));records=[...m.values()];persist();renderAll();
+    $("status").innerHTML+=" · backup restored";}catch(x){$("status").textContent="That file isn't a valid backup."}
+  e.target.value="";};
+</script>
+</body></html>
