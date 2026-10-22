@@ -29,8 +29,8 @@ header.top h1{margin:0;font-size:22px;font-weight:700;color:var(--ink);text-wrap
 header.top h1 .ar{display:block;font-size:17px;font-weight:600;color:var(--muted)}
 .status{font-size:12px;color:var(--muted)}
 .status b{color:var(--fg);font-variant-numeric:tabular-nums}
-nav.tabs{display:flex;gap:4px;border-bottom:2px solid var(--line);margin-bottom:18px;overflow-x:auto}
-nav.tabs button{appearance:none;border:0;background:none;color:var(--muted);padding:10px 14px;font:inherit;font-weight:600;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;white-space:nowrap;display:flex;flex-direction:column;align-items:flex-start;line-height:1.2}
+nav.tabs{display:flex;gap:4px;border-bottom:2px solid var(--line);margin-bottom:18px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none}
+nav.tabs button{appearance:none;border:0;background:none;color:var(--muted);padding:10px 14px;font:inherit;font-weight:600;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:0;white-space:nowrap;display:flex;flex-direction:column;align-items:flex-start;line-height:1.2}
 nav.tabs button span.ar{font-size:12px;font-weight:500}
 nav.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
 nav.tabs button:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
@@ -163,13 +163,6 @@ table.data tr.sel td{background:var(--chip)}
           <label class="f full"><span class="lbl">Deduction to refund <span class="ar">الخصم المراد استرداده</span></span><select id="rfAcc"></select></label>
           <label class="f"><span class="lbl">Letter date <span class="ar">تاريخ الخطاب</span></span><input id="rfDate" type="date"></label>
           <label class="f"><span class="lbl">Refund (SR) <span class="ar">المبلغ</span></span><input id="rfAmount" type="number" min="0" step="1"></label>
-          <label class="f full"><span class="lbl">Reason <span class="ar">السبب</span></span><select id="rfReason">
-            <option value="insurance">Insurance claim approved</option>
-            <option value="notfault">Driver found not at fault</option>
-            <option value="mgmt">Approved by management</option>
-            <option value="custom">Other (type below)</option></select></label>
-          <label class="f full" id="rfCustomEnL" hidden><span class="lbl">Reason in English</span><input id="rfCustomEn"></label>
-          <label class="f full" id="rfCustomArL" hidden><span class="lbl">Reason in Arabic <span class="ar">السبب بالعربي</span></span><input id="rfCustomAr" class="ar" dir="rtl"></label>
           <label class="f full"><span class="lbl">Head office (English)</span><input id="rfTo"></label>
           <label class="f full"><span class="lbl">Head office (Arabic) <span class="ar">المكتب الرئيسي</span></span><input id="rfToAr" class="ar" dir="rtl"></label>
         </div>
@@ -768,13 +761,13 @@ $("pdfOnly").onclick=async()=>{const r=formData();const err=validate(r);if(err)r
 
 /* ---------- Refunds ---------- */
 let refunds=[];
-const REASONS={insurance:,
+const REASONS={insurance:["The insurance claim for this accident has been approved.","تمت الموافقة على مطالبة التأمين الخاصة بهذا الحادث."],
   notfault:["After review, the driver was found not to be at fault for this accident.","بعد المراجعة، تبيّن أن السائق غير مخطئ في هذا الحادث."],
   mgmt:["Management has approved the refund of this deduction.","وافقت الإدارة على استرداد هذا الخصم."]};
-const DEF_TO="Head Office – Zoman Mohd Al Hajri", DEF_TO_AR="المكتب الرئيسي – زمان محمد الهاجري";
+const DEF_TO="Head Office – Zoman Mohd Al Hajri Contracting Company", DEF_TO_AR="المكتب الرئيسي – شركة زمان محمد الهاجري للمقاولات";
 function lsGet(k,d){try{return localStorage.getItem(k)??d}catch(e){return d}}
 function lsSet(k,v){try{localStorage.setItem(k,v)}catch(e){}}
-$("rfTo").value=lsGet("rf.to",DEF_TO);$("rfToAr").value=lsGet("rf.toAr",DEF_TO_AR);$("rfDate").value=today();
+$("rfTo").value=lsGet("rf.to2",DEF_TO);$("rfToAr").value=lsGet("rf.toAr2",DEF_TO_AR);$("rfDate").value=today();
 const refundedFor=id=>refunds.filter(f=>f.accidentId===id).reduce((s,f)=>s+Number(f.amount||0),0);
 function fillRefundSelect(keep){
   const cur=keep??$("rfAcc").value;
@@ -784,9 +777,8 @@ function fillRefundSelect(keep){
   if(!$("rfAmount").value){const r=records.find(x=>x.id===$("rfAcc").value);if(r)$("rfAmount").value=Math.max(0,r.amount-refundedFor(r.id))}
 }
 function rfData(){
-  const r=records.find(x=>x.id===$("rfAcc").value); const key=$("rfReason").value;
-  const [en,ar]=key==="custom"?[$("rfCustomEn").value.trim(),$("rfCustomAr").value.trim()]:REASONS[key];
-  return{acc:r,refundDate:$("rfDate").value,amount:Number($("rfAmount").value||0),reasonKey:key,reasonEn:en,reasonAr:ar,to:$("rfTo").value.trim(),toAr:$("rfToAr").value.trim()};
+  const r=records.find(x=>x.id===$("rfAcc").value);
+  return{acc:r,refundDate:$("rfDate").value,amount:Number($("rfAmount").value||0),reasonEn:"",reasonAr:"",to:$("rfTo").value.trim(),toAr:$("rfToAr").value.trim()};
 }
 function refundHTML(d){
   const r=d.acc||{driverName:"DRIVER NAME",empNo:"—",vehicle:"",plate:"",model:"",accidentDate:"",reportDate:"",amount:0};
@@ -799,7 +791,6 @@ function refundHTML(d){
    <p><b>Sub:</b> Refund of salary deduction</p>
    <p style="margin-top:10px">Dear Sir,</p>
    <p>With reference to the accident report dated <b>${fmtD(r.reportDate)}</b>, an amount of <b>SR ${sr(r.amount)}</b> was deducted from the salary of <u><b>${name}</b></u> (Emp. No – <b>${emp}</b>) for the accident of vehicle <b>${veh}</b> plate # <b>${pl}</b> MODEL <b>${mo}</b> on <b>${fmtD(r.accidentDate)}</b>.</p>
-   ${d.reasonEn?`<p>${esc(d.reasonEn)}</p>`:""}
    <p>Therefore, kindly refund <b>SR ${sr(d.amount)}</b> to the above employee with the coming salary.</p>
    <p>Thank you</p></div>
   <hr class="divider">
@@ -809,19 +800,18 @@ function refundHTML(d){
    <p><b>الموضوع:</b> استرداد مبلغ مخصوم من الراتب</p>
    <p style="margin-top:10px">السادة المحترمون،</p>
    <p>إشارةً إلى تقرير الحادث بتاريخ <b>${fmtD(r.reportDate)}</b>، تم خصم مبلغ <b>${sr(r.amount)} ريال</b> من راتب السائق <u><b>${name}</b></u> (الرقم الوظيفي – <b>${emp}</b>) بسبب حادث المركبة <b>${veh}</b> رقم اللوحة <b>${pl}</b> موديل <b>${mo}</b> بتاريخ <b>${fmtD(r.accidentDate)}</b>.</p>
-   ${d.reasonAr?`<p>${esc(d.reasonAr)}</p>`:""}
    <p>لذا نرجو التكرم بإعادة مبلغ <b>${sr(d.amount)} ريال</b> إلى الموظف المذكور أعلاه مع الراتب القادم.</p>
    <p>وشكراً لكم</p></div>
   <div class="deduct"><div>REFUND SR <span class="amt">( ${sr(d.amount)} )</span> TO EMPLOYEE SALARY</div><div class="ar">يُعاد مبلغ <span class="amt">( ${sr(d.amount)} )</span> ريال إلى راتب الموظف</div></div>
-  <div class="sigs"><div>Workshop Manager<br><span class="ar">مدير الورشة</span></div><div>Accounts Department<br><span class="ar">قسم الحسابات</span></div></div>`;
+  <div class="sigs"><div>Workshop Manager<br><span class="ar">مدير الورشة</span></div><div style="border:0"></div></div>`;
 }
 function renderRefund(){
-  const d=rfData(); $("rfCustomEnL").hidden=$("rfCustomArL").hidden=d.reasonKey!=="custom";
+  const d=rfData();
   if(d.acc){const done=refundedFor(d.acc.id);$("rfInfo").textContent=`Deducted SR ${sr(d.acc.amount)} · already refunded SR ${sr(done)} · remaining SR ${sr(d.acc.amount-done)}`}else $("rfInfo").textContent="Save an accident report first, then refund it here.";
   $("preview2").innerHTML=refundHTML(d); fitPreview();
 }
 $("rfAcc").addEventListener("change",()=>{const r=records.find(x=>x.id===$("rfAcc").value);if(r)$("rfAmount").value=Math.max(0,r.amount-refundedFor(r.id));renderRefund()});
-["rfDate","rfAmount","rfReason","rfCustomEn","rfCustomAr","rfTo","rfToAr"].forEach(id=>$(id).addEventListener("input",()=>{if(id==="rfTo")lsSet("rf.to",$("rfTo").value);if(id==="rfToAr")lsSet("rf.toAr",$("rfToAr").value);renderRefund()}));
+["rfDate","rfAmount","rfTo","rfToAr"].forEach(id=>$(id).addEventListener("input",()=>{if(id==="rfTo")lsSet("rf.to2",$("rfTo").value);if(id==="rfToAr")lsSet("rf.toAr2",$("rfToAr").value);renderRefund()}));
 function rfValidate(d){if(!d.acc)return"Pick the deduction to refund.";if(!(d.amount>0))return"Enter the refund amount in SR.";
   const left=d.acc.amount-refundedFor(d.acc.id);if(d.amount>left)return`Refund can't be more than the remaining SR ${sr(left)}.`;if(!d.refundDate)return"Pick the letter date.";return""}
 const rfName=d=>`Refund_${d.acc.empNo}_${d.acc.driverName.replace(/\s+/g,"_")}_${d.refundDate}.pdf`;
