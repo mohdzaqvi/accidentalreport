@@ -768,7 +768,7 @@ $("pdfOnly").onclick=async()=>{const r=formData();const err=validate(r);if(err)r
 
 /* ---------- Refunds ---------- */
 let refunds=[];
-const REASONS={insurance:["The insurance claim for this accident has been approved.","تمت الموافقة على مطالبة التأمين الخاصة بهذا الحادث."],
+const REASONS={insurance:,
   notfault:["After review, the driver was found not to be at fault for this accident.","بعد المراجعة، تبيّن أن السائق غير مخطئ في هذا الحادث."],
   mgmt:["Management has approved the refund of this deduction.","وافقت الإدارة على استرداد هذا الخصم."]};
 const DEF_TO="Head Office – Zoman Mohd Al Hajri", DEF_TO_AR="المكتب الرئيسي – زمان محمد الهاجري";
